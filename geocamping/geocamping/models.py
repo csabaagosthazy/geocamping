@@ -78,4 +78,4 @@ class Zone(models.Model):
         return self.name
 
     class Meta:
-        db_table = "zone"
+        db_table = "zones"
