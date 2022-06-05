@@ -19,8 +19,8 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('bungalowsjson', views.bungalowsjson, name='bungalowsjson'),
     path('zonesjson',views.zonesjson, name='zonesjson'),
+    path('bungalowsjson', views.bungalowsjson, name='bungalowsjson'),
     path('cottagesjson', views.cottagesjson, name='cottagesjson'),
     path('facilitiesjson', views.facilitiesjson, name='facilitiesjson'),
     path('servicesjson', views.servicesjson, name='servicesjson'),
