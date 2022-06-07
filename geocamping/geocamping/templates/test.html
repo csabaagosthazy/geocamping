@@ -61,42 +61,43 @@
         var services = L.layerGroup(); 
         var slots = L.layerGroup();
 
-        var zonesurl = '{% url "zonesjson" %}';
+        var zonesurl = '{% url "zone-list" %}';
         $.getJSON(zonesurl, function (zonesData) {
           L.geoJson(zonesData, {style:style, onEachFeature: onEachFeature }).addTo(
             zones
           );
         });
 
-        var bungalowsurl = '{% url "bungalowsjson" %}';
+        var bungalowsurl = '{% url "bungalow-list" %}';
         $.getJSON(bungalowsurl, function (bungalowsData) {
+          console.log(bungalowsData)
           L.geoJson(bungalowsData, {style:style, onEachFeature: onEachRentable }).addTo(
             bungalows
           );
         });
 
-        var cottagesurl = '{% url "cottagesjson" %}';
+        var cottagesurl = '{% url "cottage-list" %}';
         $.getJSON(cottagesurl, function (cottagesData) {
           L.geoJson(cottagesData, {style:style, onEachFeature: onEachRentable }).addTo(
             cottages
           );
         });
 
-        var facilitiesurl = '{% url "facilitiesjson" %}';
+        var facilitiesurl = '{% url "facility-list" %}';
         $.getJSON(facilitiesurl, function (facilitiesData) {
           L.geoJson(facilitiesData, {style:style, onEachFeature: onEachFeature }).addTo(
             facilities
           ).addTo(map);
         });
 
-        var servicesurl = '{% url "servicesjson" %}';
+        var servicesurl = '{% url "service-list" %}';
         $.getJSON(servicesurl, function (servicesData) {
           L.geoJson(servicesData, {style:style, onEachFeature: onEachFeature }).addTo(
             services
           );
         });
 
-        var slotsurl = '{% url "slotsjson" %}';
+        var slotsurl = '{% url "slot-list" %}';
         $.getJSON(slotsurl, function (slotsData) {
           L.geoJson(slotsData, {style:style, onEachFeature: onEachRentable }).addTo(
             slots
@@ -109,9 +110,7 @@
         };
 
         L.control.layers(baseMaps, overlays, {position: 'bottomright'}).addTo(map)
-        //var control = L.control()
-        //control.setPosition('bottomright')
-        //map.addControl(L.control())
+
 
       $("#cottages").click(function() {
             map.addLayer(cottages)
@@ -142,7 +141,7 @@
       // method that we will use to update the control based on feature properties passed
       info.update = function (props) {
           this._div.innerHTML = '<h4>Info</h4>' +  (props ?
-              '<b>' + props.name + '</b><br />' + props.area + ' m2<sup>2</sup>'
+              '<b>' + "Name: " + props.name + '</b><br />' + "Area: " + props.area + ' m<sup>2</sup>'
               : 'Hover over a property');
       };
 
@@ -154,7 +153,7 @@
         }
         layer.on('mouseover', function(){
           layer.setStyle({ fillOpacity: 0.3})
-          info.update({name:feature.properties.name, area: 20});
+          info.update({name:feature.properties.name, area: feature.properties.area.toFixed(2)});
         })
         layer.on('mouseout', function(){
           layer.setStyle({fillOpacity: 0})

@@ -39,7 +39,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'leaflet',
-    'geocamping.apps.GeocampingConfig'
+    'geocamping.apps.GeocampingConfig',
+    'api.apps.ApiConfig',
+    'rest_framework',
+    'rest_framework_gis'
 ]
 
 MIDDLEWARE = [
