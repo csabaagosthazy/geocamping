@@ -1,195 +1,176 @@
+{% extends 'base.html' %}
 {% load leaflet_tags %}
-<html>
-  <head>
-    {% leaflet_js %} {% leaflet_css %}
-    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+{% load static %}
 
-    <style>
-      #campmap {
-        height: 530px;
-        width: 700px;
-      }
-      .info {
-        padding: 6px 8px;
-        font: 14px/16px Arial, Helvetica, sans-serif;
-        background: white;
-        background: rgba(255,255,255,0.8);
-        box-shadow: 0 0 15px rgba(0,0,0,0.2);
-        border-radius: 5px;
-      }
-      .info h4 {
-        margin: 0 0 5px;
-        color: #777;
-      }
-    </style>
-  </head>
 
-  <body>
-    <div class="btn-group">
-      <button type="button" id="cottages" class="btn btn-success">Cottages</button>
-      <button type="button" id="bungalows" class="btn btn-primary">Bungalows</button>
-      <button type="button" id="slots" class="btn btn-danger">Tent slots</button>
-    </div>
+{% block head %}
+  {% leaflet_js %} {% leaflet_css %}
+{% endblock %}
+{% block body %}
+<div class="btn-group">
+  <button type="button" id="cottages" class="btn btn-success">Cottages</button>
+  <button type="button" id="bungalows" class="btn btn-primary">Bungalows</button>
+  <button type="button" id="slots" class="btn btn-danger">Tent slots</button>
+</div>
 
-    {% leaflet_map "campmap" callback="window.map_init" %}
-    <script type="text/javascript">
-      // declare tile layers
+{% leaflet_map "campmap" callback="window.map_init" %}
+<script type="text/javascript">
+  // declare tile layers
 
-      var OpenStreetMap = L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-          maxZoom: 19,
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        }
+  var OpenStreetMap = L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      maxZoom: 19,
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }
+  );
+
+  // naming the tile layers
+  var baseMaps = {
+    //"OpenTopo": OpenTopoMap,
+    //"OSM": OpenStreetMap,
+  };
+
+  function map_init(map, options) {
+
+    map.addLayer(OpenStreetMap)
+
+    var zones = L.layerGroup();
+    var bungalows = L.layerGroup();
+    var cottages = L.layerGroup();
+    var facilities = L.layerGroup();
+    var services = L.layerGroup(); 
+    var slots = L.layerGroup();
+
+    var zonesurl = '{% url "zone-list" %}';
+    $.getJSON(zonesurl, function (zonesData) {
+      L.geoJson(zonesData, {style:style, onEachFeature: onEachFeature }).addTo(
+        zones
       );
+    });
 
-      // naming the tile layers
-      var baseMaps = {
-        //"OpenTopo": OpenTopoMap,
-        //"OSM": OpenStreetMap,
-      };
+    var bungalowsurl = '{% url "bungalow-list" %}';
+    $.getJSON(bungalowsurl, function (bungalowsData) {
+      console.log(bungalowsData)
+      L.geoJson(bungalowsData, {style:style, onEachFeature: onEachRentable }).addTo(
+        bungalows
+      );
+    });
 
-      function map_init(map, options) {
+    var cottagesurl = '{% url "cottage-list" %}';
+    $.getJSON(cottagesurl, function (cottagesData) {
+      L.geoJson(cottagesData, {style:style, onEachFeature: onEachRentable }).addTo(
+        cottages
+      );
+    });
 
-        map.addLayer(OpenStreetMap)
+    var facilitiesurl = '{% url "facility-list" %}';
+    $.getJSON(facilitiesurl, function (facilitiesData) {
+      L.geoJson(facilitiesData, {style:style, onEachFeature: onEachFeature }).addTo(
+        facilities
+      ).addTo(map);
+    });
 
-        var zones = L.layerGroup();
-        var bungalows = L.layerGroup();
-        var cottages = L.layerGroup();
-        var facilities = L.layerGroup();
-        var services = L.layerGroup(); 
-        var slots = L.layerGroup();
+    var servicesurl = '{% url "service-list" %}';
+    $.getJSON(servicesurl, function (servicesData) {
+      L.geoJson(servicesData, {style:style, onEachFeature: onEachFeature }).addTo(
+        services
+      );
+    });
 
-        var zonesurl = '{% url "zone-list" %}';
-        $.getJSON(zonesurl, function (zonesData) {
-          L.geoJson(zonesData, {style:style, onEachFeature: onEachFeature }).addTo(
-            zones
-          );
-        });
+    var slotsurl = '{% url "slot-list" %}';
+    $.getJSON(slotsurl, function (slotsData) {
+      L.geoJson(slotsData, {style:style, onEachFeature: onEachRentable }).addTo(
+        slots
+      );
+    });
 
-        var bungalowsurl = '{% url "bungalow-list" %}';
-        $.getJSON(bungalowsurl, function (bungalowsData) {
-          console.log(bungalowsData)
-          L.geoJson(bungalowsData, {style:style, onEachFeature: onEachRentable }).addTo(
-            bungalows
-          );
-        });
+    var overlays = {
+      "Zones": zones,
+      "Services" : services,
+    };
 
-        var cottagesurl = '{% url "cottage-list" %}';
-        $.getJSON(cottagesurl, function (cottagesData) {
-          L.geoJson(cottagesData, {style:style, onEachFeature: onEachRentable }).addTo(
-            cottages
-          );
-        });
-
-        var facilitiesurl = '{% url "facility-list" %}';
-        $.getJSON(facilitiesurl, function (facilitiesData) {
-          L.geoJson(facilitiesData, {style:style, onEachFeature: onEachFeature }).addTo(
-            facilities
-          ).addTo(map);
-        });
-
-        var servicesurl = '{% url "service-list" %}';
-        $.getJSON(servicesurl, function (servicesData) {
-          L.geoJson(servicesData, {style:style, onEachFeature: onEachFeature }).addTo(
-            services
-          );
-        });
-
-        var slotsurl = '{% url "slot-list" %}';
-        $.getJSON(slotsurl, function (slotsData) {
-          L.geoJson(slotsData, {style:style, onEachFeature: onEachRentable }).addTo(
-            slots
-          );
-        });
-
-        var overlays = {
-          "Zones": zones,
-          "Services" : services,
-        };
-
-        L.control.layers(baseMaps, overlays, {position: 'bottomright'}).addTo(map)
+    L.control.layers(baseMaps, overlays, {position: 'bottomright'}).addTo(map)
 
 
-      $("#cottages").click(function() {
-            map.addLayer(cottages)
-            map.removeLayer(bungalows)
-            map.removeLayer(slots)
-      });
+  $("#cottages").click(function() {
+        map.addLayer(cottages)
+        map.removeLayer(bungalows)
+        map.removeLayer(slots)
+  });
 
-      $("#bungalows").click(function() {
-            map.addLayer(bungalows)
-            map.removeLayer(cottages)
-            map.removeLayer(slots)
-        });
+  $("#bungalows").click(function() {
+        map.addLayer(bungalows)
+        map.removeLayer(cottages)
+        map.removeLayer(slots)
+    });
 
-      $("#slots").click(function() {
-            map.addLayer(slots)
-            map.removeLayer(cottages)
-            map.removeLayer(bungalows)
-      });
+  $("#slots").click(function() {
+        map.addLayer(slots)
+        map.removeLayer(cottages)
+        map.removeLayer(bungalows)
+  });
 
-      var info = L.control();
+  var info = L.control();
 
-      info.onAdd = function (map) {
-          this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-          this.update();
-          return this._div;
-      };
+  info.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+      this.update();
+      return this._div;
+  };
 
-      // method that we will use to update the control based on feature properties passed
-      info.update = function (props) {
-          this._div.innerHTML = '<h4>Info</h4>' +  (props ?
-              '<b>' + "Name: " + props.name + '</b><br />' + "Area: " + props.area + ' m<sup>2</sup>'
-              : 'Hover over a property');
-      };
+  // method that we will use to update the control based on feature properties passed
+  info.update = function (props) {
+      this._div.innerHTML = '<h4>Info</h4>' +  (props ?
+          '<b>' + "Name: " + props.name + '</b><br />' + "Area: " + props.area + ' m<sup>2</sup>'
+          : 'Hover over a property');
+  };
 
-      info.addTo(map);
+  info.addTo(map);
 
-      function onEachRentable(feature, layer) {
-        if (feature.properties && feature.properties.name) {
-          layer.bindPopup(feature.properties.name);
-        }
-        layer.on('mouseover', function(){
-          layer.setStyle({ fillOpacity: 0.3})
-          info.update({name:feature.properties.name, area: feature.properties.area.toFixed(2)});
-        })
-        layer.on('mouseout', function(){
-          layer.setStyle({fillOpacity: 0})
-          info.update();
-        });
-
-      }
-
-
-      }
-
-      function style(feature) {
-        var props = feature.properties.name.split(' ');
-        var len = props.length
-        if(props[1] === 'zone') return {color: 'grey', fillOpacity: 0} 
-        if(len === 2){
-            switch (props[0]) {
-                case 'Tent': return {color: getColor(false), fillOpacity: 0};
-                case 'Bungalow':   return {color: getColor(false), fillOpacity: 0};
-                case 'Cottage':   return {color: getColor(false), fillOpacity: 0};
-          }
-        }
-        return {color: "#ff7800", weight: 5, fillOpacity: 1.0};
+  function onEachRentable(feature, layer) {
+    if (feature.properties && feature.properties.name) {
+      layer.bindPopup(feature.properties.name);
     }
+    layer.on('mouseover', function(){
+      layer.setStyle({ fillOpacity: 0.3})
+      info.update({name:feature.properties.name, area: feature.properties.area.toFixed(2)});
+    })
+    layer.on('mouseout', function(){
+      layer.setStyle({fillOpacity: 0})
+      info.update();
+    });
 
-    function getColor(reseved) {
-      return !reseved ? 'green' : 'red'
+  }
 
-    }
 
-      function onEachFeature(feature, layer) {
-        if (feature.properties && feature.properties.name) {
-          layer.bindPopup(feature.properties.name);
-        }
+  }
+
+  function style(feature) {
+    var props = feature.properties.name.split(' ');
+    var len = props.length
+    if(props[1] === 'zone') return {color: 'grey', fillOpacity: 0} 
+    if(len === 2){
+        switch (props[0]) {
+            case 'Tent': return {color: getColor(false), fillOpacity: 0};
+            case 'Bungalow':   return {color: getColor(false), fillOpacity: 0};
+            case 'Cottage':   return {color: getColor(false), fillOpacity: 0};
       }
+    }
+    return {color: "#ff7800", weight: 5, fillOpacity: 1.0};
+}
 
-    </script>
-  </body>
-</html>
+function getColor(reseved) {
+  return !reseved ? 'green' : 'red'
+
+}
+
+  function onEachFeature(feature, layer) {
+    if (feature.properties && feature.properties.name) {
+      layer.bindPopup(feature.properties.name);
+    }
+  }
+
+</script>
+{% endblock %}
