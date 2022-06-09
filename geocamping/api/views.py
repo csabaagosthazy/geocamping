@@ -1,9 +1,9 @@
-from geocamping.models import Bungalow
-from geocamping.models import Cottage
-from geocamping.models import Facility
-from geocamping.models import Service
-from geocamping.models import Slot
-from geocamping.models import Zone
+from .models import Bungalow
+from .models import Cottage
+from .models import Facility
+from .models import Service
+from .models import Slot
+from .models import Zone
 from .serializers import ZoneSerializer, ServiceSerializer, FacilitySerializer,BungalowSerializer,CottageSerializer, SlotSerializer
 from rest_framework import viewsets
 from rest_framework.decorators import action

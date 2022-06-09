@@ -1,7 +1,7 @@
 from cmath import nan
 from rest_framework_gis.serializers import GeoFeatureModelSerializer, GeometrySerializerMethodField
 from rest_framework import serializers
-from geocamping.models import Zone,Service,Facility,Bungalow, Cottage, Slot 
+from .models import Zone,Service,Facility,Bungalow, Cottage, Slot 
 
 from django.contrib.gis.geos import MultiPolygon
 

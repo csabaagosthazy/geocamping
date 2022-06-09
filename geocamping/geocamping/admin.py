@@ -1,10 +1,10 @@
 from django.contrib.gis import admin
-from .models import Bungalow
-from .models import Cottage
-from .models import Facility
-from .models import Service
-from .models import Slot
-from .models import Zone
+from api.models import Bungalow
+from api.models import Cottage
+from api.models import Facility
+from api.models import Service
+from api.models import Slot
+from api.models import Zone
 
 admin.site.register(Bungalow, admin.OSMGeoAdmin)
 admin.site.register(Cottage, admin.OSMGeoAdmin)
