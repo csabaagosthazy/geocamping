@@ -123,19 +123,23 @@
   // method that we will use to update the control based on feature properties passed
   info.update = function (props) {
       this._div.innerHTML = '<h4>Info</h4>' +  (props ?
-          '<b>' + "Name: " + props.name + '</b><br />' + "Area: " + props.area + ' m<sup>2</sup>'
+          '<b>' + "Name: " + props.name + '</b><br />'
+          + "Area: " + props.area + ' m<sup>2</sup><br />'
+          + "Price: " +props.price +'€/m<sup>2</sup><br /><br />'
+          + (props.is_available ? "Available" : "Not Available")
           : 'Hover over a property');
   };
 
   info.addTo(map);
 
   function onEachRentable(feature, layer) {
+    const  {name, area, is_available, price} = feature.properties;
     if (feature.properties && feature.properties.name) {
       layer.bindPopup(feature.properties.name);
     }
     layer.on('mouseover', function(){
       layer.setStyle({ fillOpacity: 0.3})
-      info.update({name:feature.properties.name, area: feature.properties.area.toFixed(2)});
+      info.update({name, area: area.toFixed(2), is_available, price});
     })
     layer.on('mouseout', function(){
       layer.setStyle({fillOpacity: 0})
@@ -149,20 +153,17 @@
 
   function style(feature) {
     var props = feature.properties.name.split(' ');
+
     var len = props.length
     if(props[1] === 'zone') return {color: 'grey', fillOpacity: 0} 
     if(len === 2){
-        switch (props[0]) {
-            case 'Tent': return {color: getColor(false), fillOpacity: 0};
-            case 'Bungalow':   return {color: getColor(false), fillOpacity: 0};
-            case 'Cottage':   return {color: getColor(false), fillOpacity: 0};
-      }
+      if(props[0] === "Tent" || props[0] === "Bungalow" || props[0] === "Cottage") return {color: getColor(feature.properties.is_available), fillOpacity: 0}
     }
     return {color: "#ff7800", weight: 5, fillOpacity: 1.0};
 }
 
-function getColor(reseved) {
-  return !reseved ? 'green' : 'red'
+function getColor(available) {
+  return available ? 'green' : 'red'
 
 }
 
