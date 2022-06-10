@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('geocamping', '0002_cottage_facility_service_slot_zone'),
+        ('api', '0002_cottage_facility_service_slot_zone'),
     ]
 
     operations = [
