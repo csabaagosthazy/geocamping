@@ -4,14 +4,33 @@
 
 
 {% block head %}
-  {% leaflet_js %} {% leaflet_css %}
+  {% leaflet_js %} 
+  {% leaflet_css %}
 {% endblock %}
 {% block body %}
-<div class="btn-group">
-  <button type="button" id="cottages" class="btn btn-success">Cottages</button>
-  <button type="button" id="bungalows" class="btn btn-primary">Bungalows</button>
-  <button type="button" id="slots" class="btn btn-danger">Tent slots</button>
+<div class="container-fluid text-center">    
+  <div class="row content">
+    <div class="col-sm-2 sidenav">
+      <p><a href="#">Link</a></p>
+      <p><a href="#">Link</a></p>
+      <p><a href="#">Link</a></p>
+    </div>
+    <div class="col-sm-8 text-left"> 
+      <h1>Welcome on Geocamping</h1>
+      <p>On this site you can get more information about our camping.</p>
+      <hr>
+      {% leaflet_map "campmap" callback="window.map_init" %}
+    </div>
+    <div class="col-sm-2 sidenav">
+      <div class="btn-group">
+        <button type="button" id="cottages" class="btn btn-success">Cottages</button>
+        <button type="button" id="bungalows" class="btn btn-primary">Bungalows</button>
+        <button type="button" id="slots" class="btn btn-danger">Tent slots</button>
+      </div>      
+    </div>
+  </div>
 </div>
+
 
 {% leaflet_map "campmap" callback="window.map_init" %}
 <script type="text/javascript">
@@ -36,6 +55,8 @@
 
     map.addLayer(OpenStreetMap)
 
+    var center_marker = L.layerGroup();
+    L.marker([46.94613, 17.87778]).addTo(center_marker)
     var zones = L.layerGroup();
     var bungalows = L.layerGroup();
     var cottages = L.layerGroup();
@@ -148,6 +169,14 @@
 
   }
 
+  map.on('zoomend', function() {
+    if (map.getZoom() < 12){
+            map.addLayer(center_marker)
+    }
+    else {
+            map.removeLayer(center_marker)
+        }
+  });
 
   }
 
