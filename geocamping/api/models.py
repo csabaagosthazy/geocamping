@@ -41,6 +41,7 @@ class Facility(models.Model):
 
     class Meta:
         db_table = "facilities"
+        verbose_name_plural = 'Facilities'
 
 
 class Service(models.Model):
@@ -48,7 +49,7 @@ class Service(models.Model):
     geom = models.MultiPolygonField()
     name = models.CharField(max_length=20)
     type = models.CharField(max_length=20)
-    subtype = models.CharField(max_length=20)
+    subtype = models.CharField(max_length=20, default=None, blank=True, null=True)
 
     def __str__(self):
         return self.name
