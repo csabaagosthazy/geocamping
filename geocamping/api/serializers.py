@@ -58,21 +58,26 @@ class CottageSerializer(GeoFeatureModelSerializer):
 
 class SlotSerializer(GeoFeatureModelSerializer):
 
-    #area = serializers.SerializerMethodField()
-
-    #def get_area(self, obj):
-    #    obj.geom.transform(27700, clone=False)
-    #    return obj.geom.area
     area = serializers.SerializerMethodField()
     price = serializers.SerializerMethodField()
 
     def get_area(self, obj):
         return round(obj.area.sq_m,1)
     
+
     def get_price(self, obj):
         return obj.price
+
+
 
     class Meta:
         model = Slot
         geo_field="geom"
         fields = "__all__"
+
+
+    #area = serializers.SerializerMethodField()
+
+    #def get_area(self, obj):
+    #    obj.geom.transform(27700, clone=False)
+    #    return obj.geom.area

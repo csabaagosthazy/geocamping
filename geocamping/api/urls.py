@@ -1,5 +1,6 @@
 
 from . import views
+from django.urls import path
 
 from rest_framework.routers import DefaultRouter
 
@@ -12,5 +13,10 @@ router.register(prefix=r"bungalows", viewset=views.BungalowViewSet, basename="bu
 router.register(prefix=r"cottages", viewset=views.CottageViewSet, basename="cottage")
 router.register(prefix=r"slots", viewset=views.SlotViewSet, basename="slot")
 
-urlpatterns = router.urls
+urlpatterns = [
+    path('camp_details', views.camp_details, name='camp-details'),
+]
+
+
+urlpatterns += router.urls
 
