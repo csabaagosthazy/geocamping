@@ -51,6 +51,8 @@
     //"OSM": OpenStreetMap,
   };
 
+  let rentables_table = {};
+
   function map_init(map, options) {
 
     map.addLayer(OpenStreetMap)
@@ -154,19 +156,26 @@
   info.addTo(map);
 
   function onEachRentable(feature, layer) {
-    const  {name, area, is_available, price} = feature.properties;
+    const  {name, area, is_available, price, feature_type} = feature.properties;
     if (feature.properties && feature.properties.name) {
-      layer.bindPopup(feature.properties.name);
+      layer.bindPopup(createPopupContent(feature));
     }
+
     layer.on('mouseover', function(){
       layer.setStyle({ fillOpacity: 0.3})
       info.update({name, area: area.toFixed(2), is_available, price});
     })
+
     layer.on('mouseout', function(){
       layer.setStyle({fillOpacity: 0})
       info.update();
     });
 
+    if(rentables_table[feature_type] === undefined){
+      rentables_table[feature_type] = [];
+    }
+
+    rentables_table[feature_type].push(feature);
   }
 
   map.on('zoomend', function() {
@@ -180,6 +189,13 @@
 
   }
 
+  function createPopupContent(feature){
+    let htmlString = `<p>${feature.properties.name} - ${feature.properties.is_available ? 'Available' : 'Occupied'}</p>`;
+    htmlString += `<p><button type="button" class="update-feature-button" data-rentable-type="${feature.properties.feature_type}" data-rentable-id="${feature.properties.feature_id}">Mark as ${feature.properties.is_available ? 'occupied' : 'available'}</button></p>`;
+
+    return htmlString;
+  }
+
   function style(feature) {
     var props = feature.properties.name.split(' ');
 
@@ -191,7 +207,7 @@
     return {color: "#ff7800", weight: 5, fillOpacity: 1.0};
 }
 
-function getColor(available) {
+  function getColor(available) {
   return available ? 'green' : 'red'
 
 }
@@ -201,6 +217,16 @@ function getColor(available) {
       layer.bindPopup(feature.properties.name);
     }
   }
+
+  document.querySelector("#campmap").addEventListener('click', e => {
+    if(!e.target.classList.contains('update-feature-button')){
+      return;
+    }
+
+    console.log(e.target);
+    let clicked_button = e.target;
+    let data_set = clicked_button.dataset;
+  })
 
 </script>
 {% endblock %}
