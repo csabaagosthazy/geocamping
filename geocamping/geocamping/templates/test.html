@@ -54,37 +54,59 @@
   let rentables_table = {};
 
   function map_init(map, options) {
+    function refresh_rentable(rentable_type){
+        let url;
+        let layer_group;
+
+        switch (rentable_type) {
+            case "slot":
+                url = '{% url "slot-list" %}';
+                layer_group = slotsLayer;
+                break;
+
+            case "cottage":
+                url = '{% url "cottage-list" %}'
+                layer_group = cottagesLayer;
+                break;
+
+            case "bungalow":
+                url = '{% url "bungalow-list" %}'
+                layer_group = bungalowsLayer;
+                break;
+
+            default:
+                console.error(`Unknown rentable type ${rentable_type}`)
+                return;
+        }
+
+        $.getJSON(url, function (rentableData) {
+          layer_group.clearLayers();
+          L.geoJson(rentableData, {style:style, onEachFeature: onEachRentable }).addTo(layer_group);
+        });
+    }
+
+    let bungalowsLayer = L.layerGroup();
+    let cottagesLayer = L.layerGroup();
+    let slotsLayer = L.layerGroup();
+
+        let layers_group_table = {
+      "slot": slotsLayer,
+      "cottage": cottagesLayer,
+      "bungalow": bungalowsLayer
+    }
 
     map.addLayer(OpenStreetMap)
 
     var center_marker = L.layerGroup();
     L.marker([46.94613, 17.87778]).addTo(center_marker)
     var zones = L.layerGroup();
-    var bungalows = L.layerGroup();
-    var cottages = L.layerGroup();
     var facilities = L.layerGroup();
     var services = L.layerGroup(); 
-    var slots = L.layerGroup();
 
     var zonesurl = '{% url "zone-list" %}';
     $.getJSON(zonesurl, function (zonesData) {
       L.geoJson(zonesData, {style:style, onEachFeature: onEachFeature }).addTo(
         zones
-      );
-    });
-
-    var bungalowsurl = '{% url "bungalow-list" %}';
-    $.getJSON(bungalowsurl, function (bungalowsData) {
-      console.log(bungalowsData)
-      L.geoJson(bungalowsData, {style:style, onEachFeature: onEachRentable }).addTo(
-        bungalows
-      );
-    });
-
-    var cottagesurl = '{% url "cottage-list" %}';
-    $.getJSON(cottagesurl, function (cottagesData) {
-      L.geoJson(cottagesData, {style:style, onEachFeature: onEachRentable }).addTo(
-        cottages
       );
     });
 
@@ -102,12 +124,9 @@
       );
     });
 
-    var slotsurl = '{% url "slot-list" %}';
-    $.getJSON(slotsurl, function (slotsData) {
-      L.geoJson(slotsData, {style:style, onEachFeature: onEachRentable }).addTo(
-        slots
-      );
-    });
+   refresh_rentable("bungalow")
+   refresh_rentable("cottage")
+   refresh_rentable("slot")
 
     var overlays = {
       "Zones": zones,
@@ -118,21 +137,21 @@
 
 
   $("#cottages").click(function() {
-        map.addLayer(cottages)
-        map.removeLayer(bungalows)
-        map.removeLayer(slots)
+        map.addLayer(cottagesLayer)
+        map.removeLayer(bungalowsLayer)
+        map.removeLayer(slotsLayer)
   });
 
   $("#bungalows").click(function() {
-        map.addLayer(bungalows)
-        map.removeLayer(cottages)
-        map.removeLayer(slots)
+        map.addLayer(bungalowsLayer)
+        map.removeLayer(cottagesLayer)
+        map.removeLayer(slotsLayer)
     });
 
   $("#slots").click(function() {
-        map.addLayer(slots)
-        map.removeLayer(cottages)
-        map.removeLayer(bungalows)
+        map.addLayer(slotsLayer)
+        map.removeLayer(cottagesLayer)
+        map.removeLayer(bungalowsLayer)
   });
 
   var info = L.control();
@@ -187,6 +206,36 @@
         }
   });
 
+  document.querySelector("#campmap").addEventListener('click', async e => {
+    if(!e.target.classList.contains('update-feature-button')){
+      return;
+    }
+
+    const rentableUpdateURIs = {
+      "bungalow": `/api/bungalows/%id%/toggle-availability/`,
+      "slot": `/api/slots/%id%/toggle-availability/`,
+      "cottage": `/api/cottages/%id%/toggle-availability/`
+    }
+
+    const clicked_button = e.target;
+    // the dataset attribute contains the data-* attributes set on the button that is our target.
+    // - rentableType: The type of thing we can rent (helps determine which API endpoint to call)
+    // - rentableId: Which ID the rentable element has
+
+    const {rentableType, rentableId} = clicked_button.dataset;
+    const rentable_object = rentables_table[rentableType].find(r => r.id === parseInt(rentableId));
+    const uri = rentableUpdateURIs[rentableType].replace('%id%', rentableId);
+
+    const http_response = await fetch(uri, { method: 'PUT' });
+
+    if(http_response.status === 204){
+      refresh_rentable(rentableType)
+      //alert(`The rentable spot ${rentable_object.properties.name} has been set as ${rentable_object.properties.is_available ? 'available' : 'occupied'}`)
+    } else {
+      alert(`Couldn't toggle availability. See console, in the networking tab`);
+    }
+  })
+
   }
 
   function createPopupContent(feature){
@@ -217,16 +266,6 @@
       layer.bindPopup(feature.properties.name);
     }
   }
-
-  document.querySelector("#campmap").addEventListener('click', e => {
-    if(!e.target.classList.contains('update-feature-button')){
-      return;
-    }
-
-    console.log(e.target);
-    let clicked_button = e.target;
-    let data_set = clicked_button.dataset;
-  })
 
 </script>
 {% endblock %}
