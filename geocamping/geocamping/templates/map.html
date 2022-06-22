@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% load leaflet_tags %}
+{% load static %}
+
+
+{% block head %}
+  {% leaflet_js %} 
+  {% leaflet_css %}
+{% endblock %}
+{% block body %}
+<div class="container-fluid text-center">    
+  <div class="row content">
+    <div class="col-sm-2 sidenav">
+      <p><a href="#">Link</a></p>
+      <p><a href="#">Link</a></p>
+      <p><a href="#">Link</a></p>
+    </div>
+    <div class="col-sm-8 text-left"> 
+      <h1>Welcome on Geocamping</h1>
+      <p>On this site you can get more information about our camping.</p>
+      <hr>
+      {% leaflet_map "campmap" callback="window.map_init" %}
+    </div>
+    <div class="col-sm-2 sidenav">
+      <div class="btn-group">
+        <button type="button" id="cottages" class="btn btn-success">Cottages</button>
+        <button type="button" id="bungalows" class="btn btn-primary">Bungalows</button>
+        <button type="button" id="slots" class="btn btn-danger">Tent slots</button>
+      </div>      
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+  // declare tile layers
+
+  var OpenStreetMap = L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      maxZoom: 19,
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }
+  );
+
+  // naming the tile layers
+  var baseMaps = {
+    //"OpenTopo": OpenTopoMap,
+    //"OSM": OpenStreetMap,
+  };
+
+  let rentables_table = {};
+
+  function map_init(map, options) {
+    function refresh_rentable(rentable_type){
+        let url;
+        let layer_group;
+
+        switch (rentable_type) {
+            case "slot":
+                url = '{% url "slot-list" %}';
+                layer_group = slotsLayer;
+                break;
+
+            case "cottage":
+                url = '{% url "cottage-list" %}'
+                layer_group = cottagesLayer;
+                break;
+
+            case "bungalow":
+                url = '{% url "bungalow-list" %}'
+                layer_group = bungalowsLayer;
+                break;
+
+            default:
+                console.error(`Unknown rentable type ${rentable_type}`)
+                return;
+        }
+
+        $.getJSON(url, function (rentableData) {
+          layer_group.clearLayers();
+          L.geoJson(rentableData, {style:style, onEachFeature: onEachRentable }).addTo(layer_group);
+        });
+    }
+
+    let bungalowsLayer = L.layerGroup();
+    let cottagesLayer = L.layerGroup();
+    let slotsLayer = L.layerGroup();
+
+        let layers_group_table = {
+      "slot": slotsLayer,
+      "cottage": cottagesLayer,
+      "bungalow": bungalowsLayer
+    }
+
+    map.addLayer(OpenStreetMap)
+
+    var center_marker = L.layerGroup();
+    L.marker([46.94613, 17.87778]).addTo(center_marker)
+    var zones = L.layerGroup();
+    var facilities = L.layerGroup();
+    var services = L.layerGroup(); 
+
+    var zonesurl = '{% url "zone-list" %}';
+    $.getJSON(zonesurl, function (zonesData) {
+      L.geoJson(zonesData, {style:style, onEachFeature: onEachFeature }).addTo(
+        zones
+      );
+    });
+
+    var facilitiesurl = '{% url "facility-list" %}';
+    $.getJSON(facilitiesurl, function (facilitiesData) {
+      L.geoJson(facilitiesData, {style:style, onEachFeature: onEachFeature }).addTo(
+        facilities
+      ).addTo(map);
+    });
+
+    var servicesurl = '{% url "service-list" %}';
+    $.getJSON(servicesurl, function (servicesData) {
+      L.geoJson(servicesData, {style:style, onEachFeature: onEachFeature }).addTo(
+        services
+      );
+    });
+
+   refresh_rentable("bungalow")
+   refresh_rentable("cottage")
+   refresh_rentable("slot")
+
+    var overlays = {
+      "Zones": zones,
+      "Services" : services,
+    };
+
+    L.control.layers(baseMaps, overlays, {position: 'bottomright'}).addTo(map)
+
+
+  $("#cottages").click(function() {
+        map.addLayer(cottagesLayer)
+        map.removeLayer(bungalowsLayer)
+        map.removeLayer(slotsLayer)
+  });
+
+  $("#bungalows").click(function() {
+        map.addLayer(bungalowsLayer)
+        map.removeLayer(cottagesLayer)
+        map.removeLayer(slotsLayer)
+    });
+
+  $("#slots").click(function() {
+        map.addLayer(slotsLayer)
+        map.removeLayer(cottagesLayer)
+        map.removeLayer(bungalowsLayer)
+  });
+
+  var info = L.control();
+
+  info.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+      this.update();
+      return this._div;
+  };
+
+  // method that we will use to update the control based on feature properties passed
+  info.update = function (props) {
+      this._div.innerHTML = '<h4>Info</h4>' +  (props ?
+          '<b>' + "Name: " + props.name + '</b><br />'
+          + "Area: " + props.area + ' m<sup>2</sup><br />'
+          + "Price: " +props.price +'€/m<sup>2</sup><br /><br />'
+          + (props.is_available ? "Available" : "Not Available")
+          : 'Hover over a property');
+  };
+
+  info.addTo(map);
+
+  function onEachRentable(feature, layer) {
+    const  {name, area, is_available, price, feature_type} = feature.properties;
+    if (feature.properties && feature.properties.name) {
+      layer.bindPopup(createPopupContent(feature));
+    }
+
+    layer.on('mouseover', function(){
+      layer.setStyle({ fillOpacity: 0.3})
+      info.update({name, area: area.toFixed(2), is_available, price});
+    })
+
+    layer.on('mouseout', function(){
+      layer.setStyle({fillOpacity: 0})
+      info.update();
+    });
+
+    if(rentables_table[feature_type] === undefined){
+      rentables_table[feature_type] = [];
+    }
+
+    rentables_table[feature_type].push(feature);
+  }
+
+  map.on('zoomend', function() {
+    if (map.getZoom() < 12){
+            map.addLayer(center_marker)
+    }
+    else {
+            map.removeLayer(center_marker)
+        }
+  });
+
+  document.querySelector("#campmap").addEventListener('click', async e => {
+    if(!e.target.classList.contains('update-feature-button')){
+      return;
+    }
+
+    const rentableUpdateURIs = {
+      "bungalow": `/api/bungalows/%id%/toggle-availability/`,
+      "slot": `/api/slots/%id%/toggle-availability/`,
+      "cottage": `/api/cottages/%id%/toggle-availability/`
+    }
+
+    const clicked_button = e.target;
+    // the dataset attribute contains the data-* attributes set on the button that is our target.
+    // - rentableType: The type of thing we can rent (helps determine which API endpoint to call)
+    // - rentableId: Which ID the rentable element has
+
+    const {rentableType, rentableId} = clicked_button.dataset;
+    const rentable_object = rentables_table[rentableType].find(r => r.id === parseInt(rentableId));
+    const uri = rentableUpdateURIs[rentableType].replace('%id%', rentableId);
+
+    const http_response = await fetch(uri, { method: 'PUT' });
+
+    if(http_response.status === 204){
+      refresh_rentable(rentableType)
+      //alert(`The rentable spot ${rentable_object.properties.name} has been set as ${rentable_object.properties.is_available ? 'available' : 'occupied'}`)
+    } else {
+      alert(`Couldn't toggle availability. See console, in the networking tab`);
+    }
+  })
+
+  }
+
+  function createPopupContent(feature){
+    let htmlString = `<p>${feature.properties.name} - ${feature.properties.is_available ? 'Available' : 'Occupied'}</p>`;
+    htmlString += `<p><button type="button" class="update-feature-button" data-rentable-type="${feature.properties.feature_type}" data-rentable-id="${feature.properties.feature_id}">Mark as ${feature.properties.is_available ? 'occupied' : 'available'}</button></p>`;
+
+    return htmlString;
+  }
+
+  function style(feature) {
+    var props = feature.properties.name.split(' ');
+
+    var len = props.length
+    if(props[1] === 'zone') return {color: 'grey', fillOpacity: 0} 
+    if(len === 2){
+      if(props[0] === "Tent" || props[0] === "Bungalow" || props[0] === "Cottage") return {color: getColor(feature.properties.is_available), fillOpacity: 0}
+    }
+    return {color: "#ff7800", weight: 5, fillOpacity: 1.0};
+}
+
+  function getColor(available) {
+  return available ? 'green' : 'red'
+
+}
+
+  function onEachFeature(feature, layer) {
+    if (feature.properties && feature.properties.name) {
+      layer.bindPopup(feature.properties.name);
+    }
+  }
+
+</script>
+{% endblock %}

@@ -1,3 +1,5 @@
+from rest_framework.exceptions import NotFound
+
 from .models import Bungalow
 from .models import Cottage
 from .models import Facility
@@ -173,8 +175,6 @@ class SlotViewSet(viewsets.ModelViewSet):
     queryset = Slot.objects.all()
     serializer_class = SlotSerializer
 
-
-
     def get_queryset(self):
 
         #sub query for price
@@ -253,6 +253,18 @@ class SlotViewSet(viewsets.ModelViewSet):
         available_count= Slot.objects.filter(is_available = True).aggregate(available_count=Count("id"))
         return Response(available_count)
 
+    @action(detail=False, methods=["PUT"], url_path="(?P<pk>[0-9]+)/toggle-availability")
+    def toggle_available(self, request, *args, **kwargs):
+        rentable_id = kwargs["pk"]
+        rentable_query = Slot.objects.filter(id__exact=rentable_id)
+        if not rentable_query.exists():
+            return Response(status=404)
+
+        rentable = rentable_query.get()
+        rentable.is_available = not rentable.is_available
+        rentable.save()
+
+        return Response(status=204)
 
 
 class BungalowViewSet(viewsets.ModelViewSet):
@@ -285,8 +297,6 @@ class BungalowViewSet(viewsets.ModelViewSet):
         shower_dist = Facility.objects.filter(name = "Toilettes and shower").annotate(
             distance = Distance(Centroid("geom"), Centroid(instance.geom))
         ).order_by("distance").values("distance").first()["distance"]
-
-
 
         #get distance to facilities
         facilites_dist = Facility.objects.exclude(name = "Toilettes and shower").annotate(
@@ -333,6 +343,18 @@ class BungalowViewSet(viewsets.ModelViewSet):
         available_count= Bungalow.objects.filter(is_available = True).aggregate(available_count=Count("id"))
         return Response(available_count)
 
+    @action(detail=False, methods=["PUT"], url_path="(?P<pk>[0-9]+)/toggle-availability")
+    def toggle_available(self, request, *args, **kwargs):
+        rentable_id = kwargs["pk"]
+        rentable_query = Bungalow.objects.filter(id__exact=rentable_id)
+        if not rentable_query.exists():
+            return Response(status=404)
+
+        rentable = rentable_query.get()
+        rentable.is_available = not rentable.is_available
+        rentable.save()
+
+        return Response(status=204)
 
 
 class CottageViewSet(viewsets.ModelViewSet):
@@ -413,3 +435,16 @@ class CottageViewSet(viewsets.ModelViewSet):
     def available_count(self, request):
         available_count= Cottage.objects.filter(is_available = True).aggregate(available_count=Count("id"))
         return Response(available_count)
+
+    @action(detail=False, methods=["PUT"], url_path="(?P<pk>[0-9]+)/toggle-availability")
+    def toggle_available(self, request, *args, **kwargs):
+        rentable_id = kwargs["pk"]
+        rentable_query = Cottage.objects.filter(id__exact=rentable_id)
+        if not rentable_query.exists():
+            return Response(status=404)
+
+        rentable = rentable_query.get()
+        rentable.is_available = not rentable.is_available
+        rentable.save()
+
+        return Response(status=204)
