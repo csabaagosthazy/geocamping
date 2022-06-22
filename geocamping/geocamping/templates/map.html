@@ -11,9 +11,58 @@
 <div class="container-fluid text-center">    
   <div class="row content">
     <div class="col-sm-2 sidenav">
-      <p><a href="#">Link</a></p>
-      <p><a href="#">Link</a></p>
-      <p><a href="#">Link</a></p>
+    {% block sidenav %}
+    <script type="text/javascript">
+          
+          var detailsurl = '{% url "camp-details" %}';
+          $.getJSON(detailsurl, function (campDetails) {
+            document.getElementById("campingdetails").innerHTML = 
+            `Total area: ${campDetails.total_area.area} ${campDetails.total_area.measure}`;
+            console.log(campDetails)
+            const list = document.querySelector('#services')
+            Object.values(campDetails.services).map(service => {
+              const serviceParagraph = document.createElement('p')
+              serviceParagraph.innerText = `${service.dist_to}: ${service.distance} ${service.measure}`;
+              list.appendChild(serviceParagraph)
+            })
+            const leaseList = document.querySelector('#lease-details')
+            Object.entries(campDetails.lease_details).map(([name, values]) => {
+              const leaseDiv = document.createElement('div')
+              leaseDiv.style.textAlign = 'center'
+              const leaseHeader = document.createElement('h4')
+              leaseHeader.innerText = name
+              console.log(name)
+              leaseDiv.appendChild(leaseHeader)
+              console.log(values)
+              const leaseInfoList = document.createElement("UL");
+              leaseInfoList.style.listStyleType = 'none'
+              leaseInfoList.style.display = 'inline-block'
+              leaseInfoList.style.paddingInlineStart = '0'
+              leaseInfoList.style.textAlign = 'center'
+
+              const areaItem = document.createElement("LI");
+              const capacityItem = document.createElement("LI");
+              const countItem = document.createElement("LI");
+              areaItem.appendChild(document.createTextNode(`Total area: ${values.total_area.area} ${values.total_area.measure}`))
+              capacityItem.appendChild(document.createTextNode(`Capacity: ${values.total_capacity} person`))
+              countItem.appendChild(document.createTextNode(`Count: ${values.total_count} pcs`))
+
+              leaseInfoList.appendChild(areaItem);
+              leaseInfoList.appendChild(capacityItem );
+              leaseInfoList.appendChild(countItem);
+              leaseDiv.appendChild(leaseInfoList)
+              leaseList.appendChild(leaseDiv)
+            })
+
+    });
+    </script>
+    <h3>Camping details</h3>
+      <p id="campingdetails"></p>
+      <h3>Services</h3>
+      <div id="services"></div>
+      <h3>Lease details</h3>
+      <div id="lease-details"></div>
+      {% endblock %}
     </div>
     <div class="col-sm-8 text-left"> 
       <h1>Welcome on Geocamping</h1>
