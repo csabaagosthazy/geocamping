@@ -18,7 +18,6 @@
           $.getJSON(detailsurl, function (campDetails) {
             document.getElementById("campingdetails").innerHTML = 
             `Total area: ${campDetails.total_area.area} ${campDetails.total_area.measure}`;
-            console.log(campDetails)
             const list = document.querySelector('#services')
             Object.values(campDetails.services).map(service => {
               const serviceParagraph = document.createElement('p')
@@ -31,9 +30,7 @@
               leaseDiv.style.textAlign = 'center'
               const leaseHeader = document.createElement('h4')
               leaseHeader.innerText = name
-              console.log(name)
               leaseDiv.appendChild(leaseHeader)
-              console.log(values)
               const leaseInfoList = document.createElement("UL");
               leaseInfoList.style.listStyleType = 'none'
               leaseInfoList.style.display = 'inline-block'
@@ -285,7 +282,8 @@
 
   }
 
-  function createPopupContent(feature){
+function createPopupContent(feature){
+
     let htmlString = `<p>${feature.properties.name} - ${feature.properties.is_available ? 'Available' : 'Occupied'}</p>`;
     htmlString += `<p><button type="button" class="update-feature-button" data-rentable-type="${feature.properties.feature_type}" data-rentable-id="${feature.properties.feature_id}">Mark as ${feature.properties.is_available ? 'occupied' : 'available'}</button></p>`;
 
