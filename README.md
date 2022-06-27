@@ -18,7 +18,7 @@ Cottages: rentable cottages
 Bungalows: rentable bungalows
 Slots: rentable tent slots
 
-(Shape files)
+([Shape files](camping_shp.zip))
 
 #Database
 
@@ -28,8 +28,7 @@ Slots: rentable tent slots
 All the layers are saved in the database, PostgreSQL with PostGIS extension. 
 This allows to store geometry (geom) files in the database.
 
-(SQL scripts)
-
+([SQL scripts](SQL_scripts.zip))
 
 #API
 
@@ -39,7 +38,7 @@ This handles all request and responses plus make geospatial calculations.
 With GIS python there are many functions for geometry, such as area, distance calculation... etc. 
 Here there are only a few implemented.
 
-(API doc)
+([Postman api doc](geocamping.postman_collection.json))
 
 #User interface
 
