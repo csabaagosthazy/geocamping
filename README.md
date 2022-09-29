@@ -1,5 +1,5 @@
 # Geocamping
-Web application for a camping site using GIS python, Leaflet and 
+Web application for a camping site using GIS python, Leaflet and Django
 This application was created as a university project by
 Babaiantz Mathias, Agosthazy Csaba, Pinto de Matos Daniel
 
